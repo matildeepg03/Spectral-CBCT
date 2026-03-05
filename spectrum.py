@@ -40,10 +40,10 @@ fluence = [241093747.19029588, 46387505.50826389, 43705892.59321092, 49858992.22
 
 # normalize the fluence
 weights = []
-n = len(energy_bins)
-for i in range (0, n):
-    weights.append(fluence[i] / sum(fluence))
-    i = i + 1
-
+total_fluence = sum(fluence)
+for f in fluence:
+    weights.append(round(f / total_fluence, 4))
+weights[-1] = 1 - sum(weights[:-1])
+weights = [round(w, 4) for w in weights]
 print("Weights: ", weights)
     

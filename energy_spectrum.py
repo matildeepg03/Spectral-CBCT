@@ -28,14 +28,14 @@ world.material = "G4_Galactic"
 source = sim.add_source("GenericSource", "xraygun")
 source.particle = "gamma"
 source.attached_to = "world"
-source.n = int(1000)
+source.n = int(100000)
 # time intervals
 source.start_time = 0 * sec
 source.end_time = 1 * sec
 # energy
 source.energy.type = "spectrum_discrete"
 source.energy.spectrum_energies = [7.5*keV, 12.5*keV, 17.5*keV, 22.5*keV, 27.5*keV, 32.5*keV, 37.5*keV, 42.5*keV, 47.5*keV, 52.5*keV, 57.5*keV, 62.5*keV, 67.5*keV]
-source.energy.spectrum_weights = [0.4072946920874612, 0.07836530392379343, 0.07383508810831572, 0.08422990277662021, 0.08043436394501548, 0.07016479213894204, 0.058297295698882576, 0.04696558687116853, 0.03678913173937084, 0.027745064448894324, 0.019605948916326707, 0.011957534971000338, 0.004315294374208617]
+source.energy.spectrum_weights = [0.4073, 0.0784, 0.0738, 0.0842, 0.0804, 0.0702, 0.0583, 0.047, 0.0368, 0.0277, 0.0196, 0.012, 0.0043]
 #source.energy.mono = 70*keV
 # FAN BEAM
 # position
