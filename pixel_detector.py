@@ -26,7 +26,7 @@ world.material = "G4_Galactic"
 source = sim.add_source("GenericSource", "xraygun")
 source.particle = "gamma"
 source.attached_to = "world"
-source.n = int(1000)
+source.n = int(100000)
 # time intervals
 source.start_time = 0 * sec
 source.end_time = 1 * sec
@@ -71,7 +71,9 @@ psa.attributes = [
       "PreDirection",
       "EventID",
       "Weight",
-      "TrackVertexMomentumDirection"
+      "TrackVertexMomentumDirection",
+      "TrackVolumeName",
+      "TrackVolumeCopyNo",
   ]
 
 # to run the simulation
