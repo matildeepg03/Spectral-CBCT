@@ -19,8 +19,18 @@ um = gate.g4_units.um
 
 # set a world
 world = sim.world
+sim.physics_manager.physics_list_name = "G4EmStandardPhysics_option4"
 world.size = [40*cm, 40*cm, 40*cm]
 world.material = "G4_Galactic"
+
+# principal phantom
+phantom = sim.add_volume("TubsVolume", "phantom")
+phantom.mother = "world"
+phantom.rmin = 0 * cm # inner radius
+phantom.rmax = 8 * cm # outer radius
+phantom.material = "G4_WATER"
+phantom.dz = 0.5 * cm
+phantom.color = [0.2, 0.6, 1.0, 0.25]
 
 # SOURCE
 source = sim.add_source("GenericSource", "xraygun")
@@ -52,6 +62,16 @@ detector.material = "G4_Galactic"
 # pixelization
 pixel_side = 128
 pixel_size = 40*cm/pixel_side
+dose = sim.add_actor("DoseActor", "pixelization")
+dose.attached_to = "detector"
+dose.size = [pixel_side, pixel_side, 1]      # number of voxels
+dose.spacing = [pixel_size, pixel_size, 5*mm]  # voxel size
+dose.edep.active = False
+dose.counts.active = True
+dose.output_filename = "pixel_counts.mhd"
+dose.write_to_disk = True
+
+""" # pixelization
 pixel = sim.add_volume("Box", "pixel")
 pixel.mother = "detector"
 pixel.size = [pixel_size, pixel_size, 5*mm]
@@ -74,7 +94,7 @@ psa.attributes = [
       "TrackVertexMomentumDirection",
       "TrackVolumeName",
       "TrackVolumeCopyNo",
-  ]
+  ] """
 
 # to run the simulation
 sim.run_timing_intervals = [[0, 1 * sec]]

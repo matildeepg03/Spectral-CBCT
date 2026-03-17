@@ -1,4 +1,5 @@
 import uproot
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import opengate as gate
@@ -12,22 +13,73 @@ source = np.array([0.0, 0.0, 20*cm])
 detector_size = np.array([40*cm, 40*cm])     
 detector_z = -18*cm                          
 
-# open root file
+# READ VACUUM ROOT FILE
+file = uproot.open("phasespace_vacuum.root")
+tree_vacuum = file["psa;1"]
+x_vac = tree_vacuum["PrePosition_X"].array(library="np")
+y_vac = tree_vacuum["PrePosition_Y"].array(library="np")
+weight_vac = tree_vacuum["Weight"].array(library="np")
+
+# READ SIMULATION ROOT FILE
 file = uproot.open("phasespace.root")
 tree = file["psa;1"]
-
-# read branched of root file
 x = tree["PrePosition_X"].array(library="np") # array of x positions
 y = tree["PrePosition_Y"].array(library="np")
+weight = tree["Weight"].array(library="np")
+
+
+# Simulation Parameters
+phantom = "water"
+rotation = 0  # degrees
+
+# Define detector grid
+detector_size = np.array([40, 40])
+nx = ny = 128
+x_edges = np.linspace(-detector_size[0]/2, detector_size[0]/2, nx+1)
+y_edges = np.linspace(-detector_size[1]/2, detector_size[1]/2, ny+1)
+
+# Compute 2D histogram for vacuum and simulation data
+# I0: vacuum (incident beam)
+I0, _, _ = np.histogram2d(x_vac, y_vac, bins=[x_edges, y_edges], weights=weight_vac)
+# I: phantom (after attenuation)
+I, _, _ = np.histogram2d(x, y, bins=[x_edges, y_edges], weights=weight)
+
+# Compute attenuation map
+eps = 1e-12  # prevent log(0)
+mu_map = -np.log((I + eps) / (I0 + eps))
+mu_map = np.clip(mu_map, 0, np.inf)
+# Display it
+plt.figure(figsize=(6,6))
+plt.imshow(mu_map.T, origin='lower',
+           extent=[x_edges[0], x_edges[-1], y_edges[0], y_edges[-1]],
+           cmap='viridis')
+plt.colorbar(label='attenuation')
+plt.xlabel('x [mm]')
+plt.ylabel('y [mm]')
+plt.title("Attenuation Map")
+plt.show()
+
+# Compute projection (line integral) along z for each pixel
+projection = np.sum(mu_map, axis=1)
+
+# Save prpjection data
+out_folder = "projections"
+os.makedirs(out_folder, exist_ok=True)
+filename = os.path.join(out_folder, f"{phantom}_{np.angle}.npy")
+np.save(filename, projection)
+
+
+""" DIRECTION FILTERING
+
+# expected particle direction
 z = tree["PrePosition_Z"].array(library="np")
 px = tree["PreDirection_X"].array(library="np")
 py = tree["PreDirection_Y"].array(library="np")
 pz = tree["PreDirection_Z"].array(library="np")
 energy = tree["KineticEnergy"].array(library="np")
-weight = tree["Weight"].array(library="np")
 preposition = np.vstack((x, y, z)).T
 predirection = np.vstack((px, py, pz)).T
-# expected particle direction
+pixel_id = tree["TrackVolumeCopyNo"].array(library="np")
 r = preposition - source
 u_expected = r / np.linalg.norm(r, axis=1, keepdims=True)
 
@@ -46,6 +98,7 @@ weight_detected = weight[mask_detector]
 x_hits = x_hit[mask_detector]
 y_hits = y_hit[mask_detector]
 u_expected_detected = u_expected[mask_detector]
+pixel_id_detected = pixel_id[mask_detector]
 
 # compute angular deviation
 u_measured = predirection_detected / np.linalg.norm(predirection_detected, axis=1, keepdims=True)
@@ -61,6 +114,9 @@ changed = angle_deg > threshold
 #apply this mask
 energy_aligned = energy_detected[no_change]
 weight_aligned = weight_detected[no_change]
+pixel_id_aligned = pixel_id_detected[no_change]
+x_ballistic = x_hits[no_change]
+y_ballistic = y_hits[no_change]
 
 total_detected = len(preposition_detected)
 scattered_detected = np.sum(changed)
@@ -69,10 +125,26 @@ print("Total particles reaching detector:", total_detected)
 print("Particles reaching detector that are scattered:", scattered_detected)
 print("Fraction scattered:", scattered_detected / total_detected)
 
+ """
+
+
+projection = np.sum(mu_map, axis=1)
+
+# save projection data
+out_folder = "projections"
+os.makedirs(out_folder, exist_ok=True)
+np.save(os.path.join(out_folder, f"projection_{angle_deg:03d}.npy"), projection)
+
+
+
+
+
+"""
+ENERGY SPECTRUM ANALYSIS
+
 # Define source spectrum (discrete energies)
 source_energies = np.array([1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5, 10.5, 11.5, 12.5, 13.5, 14.5, 15.5, 16.5, 17.5, 18.5, 19.5, 20.5, 21.5, 22.5, 23.5, 24.5, 25.5, 26.5, 27.5, 28.5, 29.5, 30.5, 31.5, 32.5, 33.5, 34.5, 35.5, 36.5, 37.5, 38.5, 39.5, 40.5, 41.5, 42.5, 43.5, 44.5, 45.5, 46.5, 47.5, 48.5, 49.5, 50.5, 51.5, 52.5, 53.5, 54.5, 55.5, 56.5, 57.5, 58.5, 59.5, 60.5, 61.5, 62.5, 63.5, 64.5, 65.5, 66.5,67.5 ,68.5 ,69.5, 70.5, 71.5, 72.5, 73.5, 74.5, 75.5, 76.5, 77.5, 78.5, 79.5, 80.5, 81.5, 82.5, 83.5, 84.5, 85.5, 86.5, 87.5, 88.5, 89.5, 90.5, 91.5, 92.5, 93.5, 94.5, 95.5, 96.5, 97.5, 98.5, 99.5])
 source_weights = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0001, 0.0, 0.0003, 0.0003, 0.0007, 0.0015, 0.0025, 0.0038, 0.0054, 0.0072, 0.009, 0.0109, 0.0125, 0.0141, 0.0155, 0.0169, 0.0181, 0.0191, 0.02, 0.0207, 0.0214, 0.0218, 0.0221, 0.0223, 0.0223, 0.0224, 0.0223, 0.0222, 0.022, 0.0217, 0.0215, 0.0212, 0.0208, 0.0204, 0.02, 0.0195, 0.0191, 0.0186, 0.018, 0.0175, 0.0169, 0.0163, 0.0157, 0.0151, 0.0145, 0.0139, 0.0133, 0.0127, 0.0249, 0.0124, 0.0335, 0.0116, 0.0112, 0.0109, 0.0105, 0.0101, 0.0098, 0.012, 0.0142, 0.0087, 0.0098, 0.0068, 0.0066, 0.0063, 0.0061, 0.0059, 0.0057, 0.0055, 0.0052, 0.005, 0.0048, 0.0046, 0.0044, 0.0041, 0.0039, 0.0037, 0.0035, 0.0032, 0.003, 0.0028, 0.0026, 0.0023, 0.0021, 0.0019, 0.0016, 0.0014, 0.0012, 0.0009, 0.0007, 0.0004, 0.0001])
-
 
 # Build non-overlapping bin edges from `source_energies` centers
 bin_edges = np.arange(1,101,1)
@@ -115,23 +187,7 @@ plt.xlim(0, 100)  # restrict x-axis to the relevant range
 plt.legend()
 plt.grid(True, axis='y')
 plt.tight_layout()
-plt.show()
-
-""" # plot scatter map
-x_ballistic = x_hits[no_change]
-y_ballistic = y_hits[no_change]
-x_scattered = x_hits[changed]
-y_scattered = y_hits[changed]
-
-plt.figure(figsize=(8,8))
-plt.scatter(x_scattered, y_scattered, s=1, color="red", label="Scattered", alpha=0.5)
-plt.scatter(x_ballistic, y_ballistic, s=1, color="blue", label="Ballistic", alpha=0.5)
-plt.xlabel("x (mm)")
-plt.ylabel("y (mm)")
-plt.title("Detector Map")
-plt.legend()
-plt.xlim(-detector_size[0]/2, detector_size[0]/2)
-plt.ylim(-detector_size[1]/2, detector_size[1]/2)
-plt.gca().set_aspect('equal', adjustable='box')
 plt.show() """
+
+
 
