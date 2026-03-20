@@ -29,14 +29,14 @@ phantom.mother = "world"
 phantom.rmin = 0 * cm # inner radius
 phantom.rmax = 8 * cm # outer radius
 phantom.material = "G4_WATER"
-phantom.dz = 0.5 * cm
+phantom.dz = 3 * cm
 phantom.color = [0.2, 0.6, 1.0, 0.25]
 
 # SOURCE
 source = sim.add_source("GenericSource", "xraygun")
 source.particle = "gamma"
 source.attached_to = "world"
-source.n = int(100000)
+source.n = int(1e6)
 # time intervals
 source.start_time = 0 * sec
 source.end_time = 1 * sec
@@ -59,7 +59,7 @@ detector.translation = [0, 0, -18*cm]
 detector.color = [0.35, 0.5, 0.29, 0.75]
 detector.material = "G4_Galactic"
 
-# pixelization
+""" # pixelization
 pixel_side = 128
 pixel_size = 40*cm/pixel_side
 dose = sim.add_actor("DoseActor", "pixelization")
@@ -69,7 +69,7 @@ dose.spacing = [pixel_size, pixel_size, 5*mm]  # voxel size
 dose.edep.active = False
 dose.counts.active = True
 dose.output_filename = "pixel_counts.mhd"
-dose.write_to_disk = True
+dose.write_to_disk = True """
 
 """ # pixelization
 pixel = sim.add_volume("Box", "pixel")
@@ -78,23 +78,17 @@ pixel.size = [pixel_size, pixel_size, 5*mm]
 pixel.material = "G4_Galactic"
 pixel.color = [0.8, 0.8, 0.8, 0.5]
 pixel.translation = gate.geometry.utility.get_grid_repetition(size=[pixel_side, pixel_side, 1], spacing=[pixel_size, pixel_size, 0], start=[-20*cm + pixel_size/2, -20*cm + pixel_size/2, 0])
-
+"""
 # phase space actor
 psa = sim.add_actor("PhaseSpaceActor", "psa")
 psa.attached_to = "detector"
-psa.output_filename = "phasespace.root"
+psa.output_filename = "phasespace0.root"
 # to store only the first interaction of the particle with the volume
 psa.steps_to_store = "first"
 psa.attributes = [
       "KineticEnergy",
       "PrePosition",
-      "PreDirection",
-      "EventID",
-      "Weight",
-      "TrackVertexMomentumDirection",
-      "TrackVolumeName",
-      "TrackVolumeCopyNo",
-  ] """
+  ]
 
 # to run the simulation
 sim.run_timing_intervals = [[0, 1 * sec]]
