@@ -1,3 +1,5 @@
+"""This script reads phase-space data and averages particle information into a 2D pixel grid."""
+
 import uproot
 import numpy as np
 

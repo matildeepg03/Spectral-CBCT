@@ -1,3 +1,5 @@
+"""This script defines the main OpenGATE simulation setup for a CT-like phantom study."""
+
 import opengate as gate
 import numpy as np
 import sys
@@ -10,8 +12,10 @@ deg = gate.g4_units.deg
 mm = gate.g4_units.mm
 sec = gate.g4_units.s
 
-angle_deg = 135
+
+
 #n = int(sys.argv[1])
+n=1
 # Create a simulation
 sim = gate.Simulation()
 sim.visu = True
@@ -25,16 +29,41 @@ world.size = [320*cm, 320*cm, 500*cm]
 world.material = "G4_Galactic"
 
 # Phantom
-#phantom2 = sim.add_volume("Box", "phantom2")
 phantom = sim.add_volume("TubsVolume", "phantom")
 phantom.mother = "world"
-#phantom2.size = [35*mm, 35*mm, 40*mm]
 phantom.rmin = 0 * cm
-phantom.rmax = 40 * mm
+phantom.rmax = 10 * mm
 phantom.material = "G4_WATER"
-phantom.dz = 60* mm
+phantom.dz = 15 * mm
 phantom.translation = [0, 0, 0]
-phantom.color = [0.2, 0.6, 1.0, 0.25] 
+phantom.color = [0.2, 0.6, 1.0, 0.25]
+
+# mini phantoms that mimmic the tissues
+mini_radius = 1.5 * mm
+
+tissues = [
+    ("compact",   "G4_BONE_COMPACT_ICRU", [0.7, 0.7, 0.7, 1]), # light gray
+    ("standardized","G4_B-100_BONE", [1.0, 0.9, 0.8, 1]), # beige
+    ("cortical", "G4_BONE_CORTICAL_ICRP",[1.0, 0.5, 0.5, 1]), # light red
+]
+
+
+for i, (name, mat, color) in enumerate(tissues):
+    s = sim.add_volume("TubsVolume", f"insert_{name}")
+    s.mother = "phantom"
+    s.rmin = 0 * mm
+    s.rmax = mini_radius
+    s.material = mat
+    s.color = color
+    s.dz = 15 * mm
+
+    # arrange in a ring
+    angle = i * 2 * np.pi / len(tissues)
+    s.translation = [
+        5 * np.cos(angle) * mm,
+        5 * np.sin(angle) * mm,
+        0
+    ]
 
 # Set initial 90 degree rotation around Y to make horizontal
 rotation_y = np.array([
@@ -42,14 +71,22 @@ rotation_y = np.array([
     [0, 1, 0],
     [-np.sin(90*deg), 0, np.cos(90*deg)]
 ])
+phantom.rotation = rotation_y
 
-#phantom.rotation = rotation_y
+rotation_x = np.array([
+    [1, 0, 0],
+    [0, np.cos(n*deg), -np.sin(n*deg)],
+    [0, np.sin(n*deg),  np.cos(n*deg)]
+])
+
+final_rotation = rotation_x @ rotation_y
+phantom.rotation = final_rotation
 """
 # Source
 source = sim.add_source("GenericSource", "xraygun")
 source.particle = "gamma"
 source.attached_to = "world"
-source.n = int(50)
+source.n = int(1e7)
 source_initial_pos = np.array([0.0, 0.0, 2300.0*mm])
 source.position.translation = source_initial_pos.tolist()
 source.start_time = 0 * sec
@@ -59,7 +96,7 @@ source.energy.spectrum_energies = [1.5*keV, 2.5*keV, 3.5*keV, 4.5*keV, 5.5*keV, 
 source.energy.spectrum_weights = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0001, 0.0, 0.0003, 0.0003, 0.0007, 0.0014, 0.0024, 0.0036, 0.0051, 0.0067, 0.0085, 0.0102, 0.0119, 0.0136, 0.0151, 0.0164, 0.0177, 0.0187, 0.0196, 0.0204, 0.021, 0.0214, 0.0217, 0.0219, 0.022, 0.022, 0.0219, 0.0218, 0.0216, 0.0213, 0.021, 0.0207, 0.0203, 0.0199, 0.0195, 0.0191, 0.0187, 0.0182, 0.0178, 0.0173, 0.0168, 0.0164, 0.0159, 0.0155, 0.015, 0.0146, 0.0141, 0.0137, 0.0257, 0.0129, 0.0346, 0.012, 0.0116, 0.0112, 0.0109, 0.0105, 0.0101, 0.0124, 0.0147, 0.0091, 0.0101, 0.007, 0.0068, 0.0066, 0.0063, 0.0061, 0.0059, 0.0057, 0.0054, 0.0052, 0.005, 0.0047, 0.0045, 0.0043, 0.004, 0.0038, 0.0036, 0.0034, 0.0031, 0.0029, 0.0027, 0.0024, 0.0022, 0.0019, 0.0017, 0.0014, 0.0012, 0.001, 0.0007, 0.0004, 0.0005]
 source.direction.type = "iso"
 source.direction.theta = [0*deg, 0.7*deg]
-"""
+
 # Detector
 detector = sim.add_volume("Box", "detector")
 detector.mother = "world"
@@ -75,17 +112,8 @@ psa.attached_to = "detector"
 psa.steps_to_store = "first"
 psa.attributes = ["KineticEnergy", "PrePosition"]
 
-rotation_y_dynamic = np.array([
-    [np.cos(angle_deg * deg), 0, np.sin(angle_deg * deg)],
-    [0, 1, 0],
-    [-np.sin(angle_deg * deg), 0, np.cos(angle_deg * deg)],
-])
-
-phantom.rotation = rotation_y_dynamic @ rotation_y
-
-psa.output_filename = f"ROOT_test/root_open{angle_deg}.root"
-
+psa.output_filename = f"ROOT_bone/root_open{n}.root"
+"""
 sim.run_timing_intervals = [[0, 1*sec]]
 sim.run()
-
-print(f"Simulation completed for open {angle_deg}!")
+print("Simulation completed")

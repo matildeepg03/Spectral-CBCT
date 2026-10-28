@@ -1,3 +1,5 @@
+"""This script extracts cylindrical values from a volume based on a defined center and radius."""
+
 import numpy as np
 
 def extract_cylinder_values(volume, center, radius, voxel_size, height_mm=15):
@@ -15,7 +17,7 @@ def extract_cylinder_values(volume, center, radius, voxel_size, height_mm=15):
 
     return volume[mask]
 
-volume = np.load("recon_high_stack.npy")
+volume = np.load("reconstruction_low.npy")
 
 N = 256
 voxel_size = 40 / N
@@ -29,7 +31,6 @@ values = extract_cylinder_values(
     voxel_size=voxel_size
 )
 
-expected_voxels = np.pi * radius_pixels**2 * int(30/voxel_size)
 
 mu = values.mean()
 sigma = values.std()
