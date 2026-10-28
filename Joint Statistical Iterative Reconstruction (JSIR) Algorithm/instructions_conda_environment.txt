@@ -1,0 +1,59 @@
+This document explains the steps necessary to use the ASTRA-toolbox, as this requires a conda environment.
+
+An additional note on using the astra toolbox for 3D geometries: an NVIDIA GPU is needed to use CUDA, thus it is not possible to run this code on a computer without NVIDIA GPU eg. macbook.
+
+1. Install conda
+    If you have never installed conda, it can be downloaded here:
+        https://www.anaconda.com/download
+
+2. Creating conda environment
+    Now, a conda environment can be created using:
+
+    A. Directly in pycharm
+        - In the bottom right corner you can see the python interpreter. Click "Add New Interpreter"
+        - Indicate "Generate New"
+        - Choose type "Conda"
+        - Choose your python version (eg: python 3.12.6)
+        - Select the location to save
+        - Click ok
+        - Open Terminal in pycharm
+        - Install astra toolbox using:
+            conda install -c astra-toolbox -c nvidia astra-toolbox
+            OR
+            conda install -c conda-forge ASTRA-toolbox
+
+        - Install remaining packages necessary:
+            conda install scipy numpy matplotlib pandas
+
+            
+    B. Directly in VScode:
+        - Click "python" icon
+        - Go to "environment managers"
+        - Add new conda environment
+        - Run terminal for this environment
+        - Install astra toolbox using:
+            conda install -c astra-toolbox -c nvidia astra-toolbox
+            OR
+            conda install -c conda-forge ASTRA-toolbox
+
+        - Install remaining packages necessary:
+            conda install scipy numpy matplotlib pandas
+
+
+
+    C. Though command line in Anaconda Prompt (Windows) or Terminal (macOS):
+        - Create environment using, environment_name must be changed to the desired name for the environment:
+            conda create -n environment_name python=3.12.6 numpy scipy pandas matplotlib
+
+        - Activate the :
+            conda activate environment_name
+
+        - Install ASTRA-toolbox:
+            conda install -c astra-toolbox -c nvidia astra-toolbox
+
+        - once finished with the environment:
+            conda deactivate environment_name
+
+        You can also add this to pycharm using "Add New Interpreter" -> "Select Existing" - > Type: "Conda" -> select your environment
+
+
