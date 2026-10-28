@@ -1,0 +1,10 @@
+[Materials]
+
+BONE_COMPACT_192: d=1.92 g/cm3; n=7
++el: name=H;  f=0.047234
++el: name=C;  f=0.144330
++el: name=N;  f=0.041990
++el: name=O;  f=0.446096
++el: name=Mg; f=0.002200
++el: name=P;  f=0.104970
++el: name=Ca; f=0.213180
